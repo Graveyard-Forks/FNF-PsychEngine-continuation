@@ -203,6 +203,7 @@ class PlayState extends MusicBeatState
 
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
+	public var camSustains:FlxCamera;
 	public var camHUD:FlxCamera;
 	public var camGame:FlxCamera;
 	public var camOther:FlxCamera;
@@ -309,10 +310,13 @@ class PlayState extends MusicBeatState
 		// var gameCam:FlxCamera = FlxG.camera;
 		camGame = initPsychCamera();
 		camHUD = new FlxCamera();
+		camSustains = new FlxCamera();
 		camOther = new FlxCamera();
 		camHUD.bgColor.alpha = 0;
 		camOther.bgColor.alpha = 0;
+		camSustains.bgColor = 0x0;
 
+		FlxG.cameras.add(camSustains, false);
 		FlxG.cameras.add(camHUD, false);
 		FlxG.cameras.add(camOther, false);
 
@@ -376,7 +380,8 @@ class PlayState extends MusicBeatState
 		boyfriendGroup = new FlxSpriteGroup(BF_X, BF_Y);
 		dadGroup = new FlxSpriteGroup(DAD_X, DAD_Y);
 		gfGroup = new FlxSpriteGroup(GF_X, GF_Y);
-
+	
+			r = 4 / (SONG.mania < 4 ? 4 : SONG.mania + 1); // prevent bigg ass arrows with lower key counts
 		switch (curStage)
 		{
 			case 'stage':
@@ -668,7 +673,6 @@ class PlayState extends MusicBeatState
 
 	function set_songSpeed(value:Float):Float
 	{
-		
 		songSpeed = value;
 		noteKillOffset = Math.max(Conductor.stepCrochet, 350 / songSpeed * playbackRate);
 		return value;
@@ -682,8 +686,6 @@ class PlayState extends MusicBeatState
 			vocals.pitch = value;
 			opponentVocals.pitch = value;
 			FlxG.sound.music.pitch = value;
-
-			
 		}
 		playbackRate = value;
 		FlxG.animationTimeScale = value;
@@ -1429,7 +1431,7 @@ class PlayState extends MusicBeatState
 		var sectionsData:Array<SwagSection> = PlayState.SONG.notes;
 		var ghostNotesCaught:Int = 0;
 		var daBpm:Float = Conductor.bpm;
-
+		totalColumns = SONG.mania + 1;
 		for (section in sectionsData)
 		{
 			if (section.changeBPM != null && section.changeBPM && section.bpm != null && daBpm != section.bpm)
@@ -1475,6 +1477,8 @@ class PlayState extends MusicBeatState
 				swagNote.animSuffix = isAlt ? "-alt" : "";
 				swagNote.mustPress = gottaHitNote;
 				swagNote.sustainLength = holdLength;
+								swagNote.scale.set(swagNote.scale.x * r, swagNote.scale.y * r);
+				swagNote.updateHitbox();
 				swagNote.noteType = noteType;
 
 				swagNote.scrollFactor.set();
@@ -1492,6 +1496,9 @@ class PlayState extends MusicBeatState
 						sustainNote.animSuffix = swagNote.animSuffix;
 						sustainNote.mustPress = swagNote.mustPress;
 						sustainNote.gfNote = swagNote.gfNote;
+						sustainNote.scale.x = swagNote.scale.x;
+						sustainNote.cameras = [camSustains];
+						sustainNote.updateHitbox();
 						sustainNote.noteType = swagNote.noteType;
 						sustainNote.scrollFactor.set();
 						sustainNote.parent = swagNote;
@@ -1599,11 +1606,13 @@ class PlayState extends MusicBeatState
 
 	public var skipArrowStartTween:Bool = false; // for lua
 
+	var r = 1.0;
+
 	private function generateStaticArrows(player:Int):Void
 	{
 		var strumLineX:Float = ClientPrefs.data.middleScroll ? STRUM_X_MIDDLESCROLL : STRUM_X;
 		var strumLineY:Float = ClientPrefs.data.downScroll ? (FlxG.height - 150) : 50;
-		for (i in 0...4)
+		for (i in 0...SONG.mania + 1)
 		{
 			// FlxG.log.add(i);
 			var targetAlpha:Float = 1;
@@ -1616,6 +1625,8 @@ class PlayState extends MusicBeatState
 			}
 
 			var babyArrow:StrumNote = new StrumNote(strumLineX, strumLineY, i, player);
+			babyArrow.scale.set(babyArrow.scale.x * r, babyArrow.scale.y * r);
+			babyArrow.updateHitbox();
 			babyArrow.downScroll = ClientPrefs.data.downScroll;
 			if (!isStoryMode && !skipArrowStartTween)
 			{
@@ -1633,7 +1644,7 @@ class PlayState extends MusicBeatState
 				if (ClientPrefs.data.middleScroll)
 				{
 					babyArrow.x += 310;
-					if (i > 1)
+					if (i > (Std.int(SONG.mania / 2)))
 					{ // Up and Right
 						babyArrow.x += FlxG.width / 2 + 25;
 					}
@@ -1642,7 +1653,7 @@ class PlayState extends MusicBeatState
 			}
 
 			strumLineNotes.add(babyArrow);
-			babyArrow.playerPosition();
+			babyArrow.playerPosition(r);
 		}
 	}
 
@@ -3282,7 +3293,7 @@ class PlayState extends MusicBeatState
 
 		if (opponentVocals.length <= 0)
 			vocals.volume = 1;
-		strumPlayAnim(true, Std.int(Math.abs(note.noteData)), Conductor.stepCrochet * 1.25 / 1000 / playbackRate);
+		strumPlayAnim(true, Std.int(Math.abs(note.noteData)), 0.15);
 		note.hitByOpponent = true;
 
 		stagesFunc(function(stage:BaseStage) stage.opponentNoteHit(note));
@@ -3371,7 +3382,7 @@ class PlayState extends MusicBeatState
 					spr.playAnim('confirm', true);
 			}
 			else
-				strumPlayAnim(false, Std.int(Math.abs(note.noteData)), Conductor.stepCrochet * 1.25 / 1000 / playbackRate);
+				strumPlayAnim(false, Std.int(Math.abs(note.noteData)), 0.15);
 			vocals.volume = 1;
 
 			if (!note.isSustainNote)

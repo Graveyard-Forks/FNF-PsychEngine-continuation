@@ -274,7 +274,7 @@ class Note extends FlxSprite
 			texture = '';
 
 			x += swagWidth * (noteData);
-			if (!isSustainNote && noteData < colArray.length)
+			if (!isSustainNote && noteData < 8)
 			{ // Doing this 'if' check to fix the warnings on Senpai songs
 				var animToPlay:String = '';
 				animToPlay = colArray[noteData % colArray.length];
@@ -334,13 +334,13 @@ class Note extends FlxSprite
 		if (globalRgbShaders[noteData] == null)
 		{
 			var newRGB:RGBPalette = new RGBPalette();
-			var arr:Array<FlxColor> = (!PlayState.isPixelStage) ? ClientPrefs.data.arrowRGB[noteData] : ClientPrefs.data.arrowRGBPixel[noteData];
+			var arr = (!PlayState.isPixelStage) ? ClientPrefs.data.arrowRGB : ClientPrefs.data.arrowRGBPixel;
 
 			if (arr != null && noteData > -1 && noteData <= arr.length)
 			{
-				newRGB.r = arr[0];
-				newRGB.g = arr[1];
-				newRGB.b = arr[2];
+				newRGB.r = arr[noteData][0];
+				newRGB.g = arr[noteData][1];
+				newRGB.b = arr[noteData][2];
 			}
 			else
 			{
@@ -466,9 +466,7 @@ class Note extends FlxSprite
 
 	function loadNoteAnims()
 	{
-		if (colArray[noteData] == null)
-			return;
-
+		var noteData = noteData % 4;
 		if (isSustainNote)
 		{
 			attemptToAddAnimationByPrefix('purpleholdend', 'pruple end hold', 24, true); // this fixes some retarded typo from the original note .FLA
@@ -484,9 +482,7 @@ class Note extends FlxSprite
 
 	function loadPixelNoteAnims()
 	{
-		if (colArray[noteData] == null)
-			return;
-
+		var noteData = noteData % 4;
 		if (isSustainNote)
 		{
 			animation.add(colArray[noteData] + 'holdend', [noteData + 4], 24, true);
@@ -525,8 +521,7 @@ class Note extends FlxSprite
 
 			if (!wasGoodHit && strumTime <= Conductor.songPosition)
 			{
-				if (!isSustainNote || (prevNote.wasGoodHit && !ignoreNote))
-					wasGoodHit = true;
+				wasGoodHit = true;
 			}
 		}
 
@@ -612,7 +607,4 @@ class Note extends FlxSprite
 
 		return rect;
 	}
-
-	
-	
 }

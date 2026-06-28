@@ -213,7 +213,7 @@ class NoteSplash extends FlxSprite
 			noteData = note.noteData;
 
 		if (randomize && maxAnims > 1)
-			noteData = noteData % Note.colArray.length + (FlxG.random.int(0, maxAnims - 1) * Note.colArray.length);
+			noteData = noteData  + (FlxG.random.int(0, maxAnims - 1) * 4);
 
 		this.noteData = noteData;
 		var anim:String = playDefaultAnim();
@@ -277,6 +277,7 @@ class NoteSplash extends FlxSprite
 		if (!config.allowPixel) rgbShader.pixelAmount = 1;
 		else if (PlayState.isPixelStage) rgbShader.pixelAmount = 6;
 
+
 		offset.set(10, 10);
 		var conf:NoteSplashAnim = config.animations.get(anim);
 		var offsets:Array<Float> = [0, 0];
@@ -318,7 +319,7 @@ class NoteSplash extends FlxSprite
 	
 	public function playDefaultAnim()
 	{
-		var anim:String = noteDataMap.get(noteData);
+		var anim:String = noteDataMap.get(noteData % 4);
 		if (anim != null && animation.exists(anim))
 			animation.play(anim, true);
 
